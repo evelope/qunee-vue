@@ -43,11 +43,11 @@
     window.HFlexEdgeUI = HFlexEdgeUI;
     // Q.loadClassPath(HFlexEdgeUI, "HFlexEdgeUI");
     var canvas = document.querySelector(".canvas");
-    setTimeout(()=>{
+    var id = setTimeout(()=>{
+      id = null;
       var qcanvas = document.querySelectorAll(".Q-Canvas")[1];
-      console.log(qcanvas)
-      qcanvas.style.display = "none"
-    },1000)
+      qcanvas.style.display = "none";
+    })
     var graph = new Q.Graph(canvas);
 
 
