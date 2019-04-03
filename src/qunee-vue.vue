@@ -6,53 +6,55 @@
 import "./qunee.min.js";
 export default {
   name: "qunee-vue",
-  mounted() {
-    let getI18NString = null;
-    if (!window.getI18NString) {
-      getI18NString = function(s) {
-        return s;
-      };
-    }
-    function HFlexEdgeUI(edge, graph) {
-      Q.doSuperConstructor(this, HFlexEdgeUI, arguments);
-    }
-    HFlexEdgeUI.prototype = {
-      drawEdge: function(path, fromUI, toUI, edgeType, fromBounds, toBounds) {
-        var from = fromBounds.center;
-        var to = toBounds.center;
-        var cx = (from.x + to.x) / 2;
-        var cy = (from.y + to.y) / 2;
-        //        path.curveTo(from.x, cy, cx, to.y);
-        path.quadTo(cx, to.y + 0.1);
-      }
+  data() {
+    return {
+      graph: null
     };
+  },
+  methods: {
+    graphInit() {
+      function HFlexEdgeUI(edge, graph) {
+        Q.doSuperConstructor(this, HFlexEdgeUI, arguments);
+      }
+      HFlexEdgeUI.prototype = {
+        drawEdge: function(path, fromUI, toUI, edgeType, fromBounds, toBounds) {
+          let from = fromBounds.center;
+          let to = toBounds.center;
+          let cx = (from.x + to.x) / 2;
+          let cy = (from.y + to.y) / 2;
+          //        path.curveTo(from.x, cy, cx, to.y);
+          path.quadTo(cx, to.y + 0.1);
+        }
+      };
 
-    Q.extend(HFlexEdgeUI, Q.EdgeUI);
-    window.HFlexEdgeUI = HFlexEdgeUI;
+      Q.extend(HFlexEdgeUI, Q.EdgeUI);
+      window.HFlexEdgeUI = HFlexEdgeUI;
 
-    // 去除水印
-    var id = setTimeout(() => {
-      id = null;
-      var qcanvas = this.$refs.canvas.querySelectorAll("div")[1];
-      qcanvas.style.display = "none";
-    });
-    var graph = new Q.Graph(this.$refs.canvas);
-    console.log(this.$refs.canvas, graph);
-
-    graph.onclick = function(evt) {
+      // 去除水印
+      let id = setTimeout(() => {
+        id = null;
+        let qcanvas = this.$refs.canvas.querySelectorAll(".Q-Canvas")[1];
+        qcanvas.style.display = "none";
+      });
+      this.graph = new Q.Graph(this.$refs.canvas);
+    }
+  },
+  mounted() {
+    this.graphInit();
+    this.graph.onclick = evt => {
       Q.log(evt.getData(), "data");
     };
     // 设置可编辑
-    // graph.editable = true;
-    graph.enableDoubleClickToOverview = false;
+    // this.graph.editable = true;
+    this.graph.enableDoubleClickToOverview = false;
     // 禁止编辑
-    graph.isMovable = function(item) {
+    this.graph.isMovable = item => {
       return false;
     };
 
-    function createEdge(name, from, to) {
-      var edge = null;
-      edge = graph.createEdge(name, from, to);
+    const createEdge = (name, from, to) => {
+      let edge = null;
+      edge = this.graph.createEdge(name, from, to);
 
       // 设置箭头 样式
       if (from.data.type == "reverse") {
@@ -78,11 +80,10 @@ export default {
 
       // 设置箭头线弯曲
       edge.uiClass = HFlexEdgeUI;
-    }
+    };
 
-    function createText(text, data) {
-      var node = graph.createNode(text, data);
-      console.log(data.img);
+    const createText = (text, data) => {
+      let node = this.graph.createNode(text, data);
       if (data.img) {
         node.image = data.img;
       } else {
@@ -126,22 +127,22 @@ export default {
       node.setStyle(Q.Styles.SELECTION_SHADOW_OFFSET_Y, 2);
 
       return node;
-    }
+    };
 
-    function localToGlobal(x, y, canvas) {
+    const localToGlobal = (x, y, canvas) => {
       x += window.pageXOffset;
       y += window.pageYOffset;
-      var clientRect = canvas.getBoundingClientRect();
+      let clientRect = canvas.getBoundingClientRect();
       return { x: x + clientRect.left, y: y + clientRect.top };
-    }
+    };
 
-    var layouter = new Q.TreeLayouter(graph);
-    layouter.isLayoutable = function(node, from) {
+    let layouter = new Q.TreeLayouter(this.graph);
+    layouter.isLayoutable = (node, from) => {
       return node == ROOT || node.host != null;
     };
     layouter.vGap = 20;
 
-    var datas = {
+    let datas = {
       name: "O1:努力建设集团企业***",
       parentChildrenDirection: Q.Consts.DIRECTION_MIDDLE,
       layoutType: Q.Consts.LAYOUT_TYPE_TWO_SIDE,
@@ -174,16 +175,16 @@ export default {
       ]
     };
 
-    function createItem(data, parent, level) {
+    const createItem = (data, parent, level) => {
       if (Q.isArray(data)) {
-        var children = data;
-        for (var i = 0, l = children.length; i < l; i++) {
-          var child = children[i];
+        let children = data;
+        for (let i = 0, l = children.length; i < l; i++) {
+          let child = children[i];
           createItem(child, parent, level);
         }
         return;
       }
-      var node = createText(data.name, data);
+      let node = createText(data.name, data);
       node.tooltipType = "text";
       node.data = data;
       level = level || 0;
@@ -198,20 +199,20 @@ export default {
         createItem(data.children, node, level + 1);
       }
       return node;
-    }
+    };
 
-    function linkToParent(node, parent) {
+    const linkToParent = (node, parent) => {
       node.host = parent;
       return createEdge(parent, node);
-    }
-    function unlinkToParent(node) {
+    };
+    const unlinkToParent = node => {
       node.host = null;
-      node.forEachInEdge(function(edge) {
-        graph.graphModel.remove(edge);
+      node.forEachInEdge(edge => {
+        this.graph.graphModel.remove(edge);
       });
-    }
+    };
 
-    var ROOT = createItem(datas);
+    let ROOT = createItem(datas);
 
     // 设置基础元素
     // ROOT.setStyle(Q.Styles.LABEL_FONT_SIZE, 20);
@@ -221,9 +222,9 @@ export default {
     // border-color
     ROOT.setStyle(Q.Styles.LABEL_BORDER_STYLE, "#0099ff");
 
-    graph.callLater(function() {
+    this.graph.callLater(() => {
       layouter.doLayout();
-      graph.zoomToOverview();
+      this.graph.zoomToOverview();
     });
   }
 };
